@@ -16,6 +16,10 @@ export default function ProductsPage() {
   /** @type {[Array, Function]} filteredProducts - The filtered list of products based on the search query. */
   const [filteredProducts, setFilteredProducts] = useState([]);
 
+  const [categories, setCategories] = useState([]); // State for categories
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [sortOrder, setSortOrder] = useState("");
+
     /** @type {[number, Function]} page - The current page number for pagination. */
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -42,6 +46,36 @@ export default function ProductsPage() {
     fetchProducts();
   }, [page]);
 
+  useEffect(() => {
+    const fetchCategories = async () =>{
+    const res = await fetch(`https://next-ecommerce-api.vercel.app/categories`);
+    const data= await res.json();
+    setCategories(data);
+    };
+    fetchCategories();
+
+    }, []);
+
+
+    const handleSort = (order) => {
+        const sortedProducts = [...filteredProducts].sort((a,b) =>
+        order === "asc" ? a.price - b.price : b.price - a.price
+    );
+    setFilteredProducts(sortedProducts);
+    setSortOrder(order);
+    };
+
+
+    const handleCategoryFilter = (category) => {
+        if (category === "") {
+            setFilteredProducts(products);
+        } else {
+            const filtered = products.filter((product) => product.category === category);
+            setFilteredProducts(filtered);
+        } 
+        setSelectedCategory(category);
+        setPage(1);
+    };
   /**
    * Go to the next page of products.
    * 
@@ -85,8 +119,33 @@ export default function ProductsPage() {
 };
 
   return (
-    <div>
+    <div className="product-ui">
     <Navbar onSearch={handleSearch} />
+
+    <div className="filters">
+        <select
+          value={sortOrder}
+          onChange={(e) => handleSort(e.target.value)}
+          className="sort-dropdown"
+        >
+          <option value="">Sort by Price</option>
+          <option value="asc">Price: Low to High</option>
+          <option value="desc">Price: High to Low</option>
+        </select>
+
+        <select
+          value={selectedCategory}
+          onChange={(e) => handleCategoryFilter(e.target.value)}
+          className="category-dropdown"
+        >
+          <option value="">All Categories</option>
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
+        </select>
+      </div>
       {loading ? (
         <p className="loading"></p>
       ) : (
