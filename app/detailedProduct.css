@@ -1,0 +1,71 @@
+/* detailedProduct.css */
+
+.product-detail {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+  }
+  
+  .displayBox1 {
+    margin-top: 110px;
+    height: 400px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .thumbnail-list {
+    display: flex;
+    
+  }
+  
+  .thumbnail-image {
+    width: 150px;
+    height: auto;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+  
+  .displayBox2 {
+    margin-top: 20px;
+  }
+  
+  .reviews {
+    margin-top: 20px;
+  }
+  
+  .review {
+    border-bottom: 1px solid #ccc;
+    padding: 10px 0;
+  }
+  
+  .review p {
+    margin: 5px 0;
+  }
+  
+  .modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .modal-content {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    position: relative;
+  }
+  
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+    font-size: 24px;
+  }
+  
