@@ -2,11 +2,12 @@
 import { useState, useEffect } from 'react';
 import "../globals.css";
 
-export default function Navbar() {
+export default function Navbar({ onSearch }) {
      /** @type {[boolean, Function]} isVisible - Tracks if the navbar is visible based on scroll direction. */
     const [isVisible, setIsVisible] = useState(true); 
-    let lastScrollTop = 0;
+    const [searchQuery, setSearchQuery] = useState("");
 
+    let lastScrollTop = 0;
     /**
      * Handles the scroll event and updates navbar visibility based on scroll direction.
      * If scrolling down, hides the navbar; if scrolling up, shows the navbar.
@@ -26,6 +27,11 @@ export default function Navbar() {
         }
 
         lastScrollTop = currentScrollTop <= 0 ? 0 : currentScrollTop; // Reset to 0 if at the top
+    };
+    const handleSearchChange = (event) => {
+        const query = event.target.value;
+        setSearchQuery(query);
+        onSearch(query);  // Send the query to the ProductsPage component
     };
 
 
@@ -49,7 +55,13 @@ export default function Navbar() {
      
             </div>
             <div>
-                {/* Other navbar content */}
+            <input
+                type="text"
+                placeholder="Search for products..."
+                value={searchQuery}
+                onChange={handleSearchChange}
+                className="search-bar"
+            />
             </div>
         </div>
     );

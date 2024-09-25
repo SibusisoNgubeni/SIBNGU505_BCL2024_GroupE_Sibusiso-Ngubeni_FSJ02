@@ -3,6 +3,7 @@ import Link from "next/link";
 import "../products.css";
 import { useState, useEffect } from "react";
 import PaginationControls from "../components/pagination";
+import Navbar from "../components/navbar";
 
 /**
  * ProductsPage component that displays a list of products and handles pagination.
@@ -11,11 +12,19 @@ import PaginationControls from "../components/pagination";
 export default function ProductsPage() {
    /** @type {[Array, Function]} products - The list of products to be displayed. */
   const [products, setProducts] = useState([]);
+
+  /** @type {[Array, Function]} filteredProducts - The filtered list of products based on the search query. */
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
     /** @type {[number, Function]} page - The current page number for pagination. */
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
+
+
+  
     /** @constant {number} productsPerPage - The number of products displayed per page. */
   const productsPerPage = 20;
+   
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -26,6 +35,7 @@ export default function ProductsPage() {
       );
       const newProducts = await res.json();
       setProducts(newProducts);
+      setFilteredProducts(newProducts);
       setLoading(false);
     };
 
@@ -39,7 +49,9 @@ export default function ProductsPage() {
    */
 
   const nextPage = () => {
+    if (page < Math.ceil(filteredProducts.length / productsPerPage)) {
     setPage((prev) => prev + 1);
+    }
   };
 
   /**
@@ -54,14 +66,36 @@ export default function ProductsPage() {
     }
   };
 
+
+  const handleSearch = (query) => {
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerQuery === "") {
+        // If search query is empty, reset filteredProducts to the full product list
+        setFilteredProducts(products);
+    }
+    else {
+        // Filter products based on the query
+        const filtered = products.filter((product) => 
+        product.title.toLowerCase().includes(lowerQuery)
+    );
+    setFilteredProducts(filtered);
+    setPage(1);
+  }
+};
+
   return (
     <div>
+    <Navbar onSearch={handleSearch} />
       {loading ? (
         <p className="loading"></p>
       ) : (
         <>
           <ul className="product-list">
-            {products.map((product) => (
+           {filteredProducts.length === 0 ? (
+            <p>No products found.</p>
+           ) : (
+            filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage).map((product) => (
               <li key={product.id} className="product-card">
                 <Link href={`/${product.id}`} className="link">
                   
@@ -78,14 +112,15 @@ export default function ProductsPage() {
                   
                 </Link>
               </li>
-            ))}
+            ))
+        )}
           </ul>
 
           <PaginationControls
             page={page}
             prevPage={prevPage}
             nextPage={nextPage}
-            products={products}
+            products={filteredProducts}
             productsPerPage={productsPerPage}
           />
         </>
