@@ -1,21 +1,23 @@
 .navbar {
     background-color: rgb(61, 56, 56);
     height: 96px;
-    width: 100%;
+    width: 100vw;
     border-radius: 10px;
     position: fixed;
-    top: 0;
-    background-color: rgb(61, 56, 56); /* Keep your desired background color */
+    margin-top: 5px;
+    margin-right: 20px;
+    background-color: rgb(61, 56, 56); 
     transition: top 0.3s ease-in-out;
     z-index: 1000;
+    
 }
 
-/* When the navbar is hidden, it's moved up and out of the view */
+
 .navbar.hidden {
-    top: -100px; /* Hide navbar by moving it upwards */
+    top: -100px; 
 }
 
-/* When the navbar is visible, it's positioned at the top */
+
 .navbar.visible {
     top: 0;
 }
