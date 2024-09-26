@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import Head from "next/head";
+import Image from "next/image";
 
 import "../products.css";
 import { useState, useEffect } from "react";
@@ -226,11 +227,19 @@ const pageDescription = selectedCategory
               filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage).map((product) => (
                 <li key={product.id} className="product-card">
                   <Link href={`/${product.id}`} className="link">
-                    <img
+
+                    <Image
                       src={product.images[0]}
                       alt={product.title}
+                      width={300}
+                      height={300}
                       className="product-image"
+                      priority={page === 1}
+                      placeholder="blur"         
+                      blurDataURL="data:image/jpeg;base64,...yourBase64Data..." 
+                      
                     />
+
                     <h2 className="product-title">{product.title}</h2>
                     <p className="product-category">Category: {product.category}</p>
                     <p className="product-brand">Brand: {product.brand}</p>
