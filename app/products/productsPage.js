@@ -1,9 +1,12 @@
 "use client";
 import Link from "next/link";
+import Head from "next/head";
+
 import "../products.css";
 import { useState, useEffect } from "react";
 import PaginationControls from "../components/pagination";
 import Navbar from "../components/navbar";
+
 
 
 /**
@@ -131,7 +134,49 @@ export default function ProductsPage() {
     }
   };
 
+const pageTitle = selectedCategory
+? `Products in ${selectedCategory} - Page ${page}`
+: searchTerm
+? `Search results for "${searchTerm}" - Page ${page}`
+: `All products - Page ${page}`;
+
+const pageDescription = selectedCategory
+? `Browse products in the ${selectedCategory} category`
+: searchTerm
+? `Showing results for "${searchTerm}`
+: `Browse all products`;
+
+
+
+
   return (
+    <>
+    <Head>
+      <title>{pageTitle}</title>
+      <meta name="description" content={pageDescription} />
+      <meta name="keywords" content="ecommerce, products, shop, online shopping, categories" />
+      <meta property="og:title" content={pageTitle} />
+      <meta property="og:description" content={pageDescription} />
+      <meta property="og:type" content="website" />
+      <meta property="og:image" content="/path-to-default-image.jpg" />
+      <meta property="twitter:card" content="summary_large_image" />
+      <meta property="twitter:title" content={pageTitle} />
+      <meta property="twitter:description" content={pageDescription} />
+      <meta property="twitter:image" content="/path-to-default-image.jpg" />
+
+      {page > 1 && (
+        <link
+          rel="prev"
+          href={`https://next-ecommerce-api.vercel.app/products?page=${page - 1}`}
+        />
+      )}
+         
+        <link
+          rel="next"
+          href={`https://next-ecommerce-api.vercel.app/products?page=${page + 1}`}
+         />
+    </Head>
+
     <div className="product-ui">
       <Navbar onSearch={handleSearch} />
 
@@ -172,7 +217,7 @@ export default function ProductsPage() {
         )}
       </div>
 
-      {loading ? (<p className="loading">Loading...</p>) : (
+      {loading ? (<p className="loading"></p>) : (
         <>
           <ul className="product-list">
             {filteredProducts.length === 0 ? (
@@ -207,6 +252,7 @@ export default function ProductsPage() {
         </>
       )}
     </div>
+    </>
   );
 }
 
