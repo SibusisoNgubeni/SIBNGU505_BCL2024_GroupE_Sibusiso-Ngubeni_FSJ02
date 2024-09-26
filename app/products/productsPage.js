@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 import PaginationControls from "../components/pagination";
 import Navbar from "../components/navbar";
 
+
 /**
  * ProductsPage component that displays a list of products and handles pagination.
  */
 
 export default function ProductsPage() {
+    
    /** @type {[Array, Function]} products - The list of products to be displayed. */
   const [products, setProducts] = useState([]);
 
@@ -23,65 +25,80 @@ export default function ProductsPage() {
     /** @type {[number, Function]} page - The current page number for pagination. */
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
-
+  const [searchTerm, setSearchTerm] = useState("");
 
   
     /** @constant {number} productsPerPage - The number of products displayed per page. */
   const productsPerPage = 20;
    
 
-  useEffect(() => {
-    const fetchProducts = async () => {
+
+    const fetchProducts = async (
+        page,
+        searchTerm = "",
+        selectedCategory = "",
+        sortOrder = ""
+    ) => {
       setLoading(true);
-      const skip = (page - 1) * productsPerPage;
+
+      const skip = (page -1) * productsPerPage;
+      
+      const queryParams = new URLSearchParams({
+        limit: productsPerPage.toString(),
+        skip: skip.toString(),
+      });
+
+      if (searchTerm) queryParams.append("q", searchTerm);
+      if (selectedCategory) queryParams.append("cataegory", selectedCategory);
+      if (sortOrder) queryParams.append("sort", sortOrder);
+
+      const queryString = queryParams.toString();
+
+
       const res = await fetch(
-        `https://next-ecommerce-api.vercel.app/products?limit=${productsPerPage}&skip=${skip}`
+        `https://next-ecommerce-api.vercel.app/products?${queryString}`
       );
+
       const newProducts = await res.json();
       setProducts(newProducts);
       setFilteredProducts(newProducts);
       setLoading(false);
     };
 
-    fetchProducts();
-  }, [page]);
+    useEffect(() => {
+        fetchProducts(page, searchTerm, selectedCategory, sortOrder);
+    }, [page, searchTerm, selectedCategory, sortOrder]);
 
-  useEffect(() => {
-    const fetchCategories = async () =>{
-    const res = await fetch(`https://next-ecommerce-api.vercel.app/categories`);
-    const data= await res.json();
-    setCategories(data);
-    };
-    fetchCategories();
-
+    useEffect(() => {
+        const fetchCategories = async () => {
+            const res = await fetch(`https://next-ecommerce-api.vercel.app/categories`);
+            const data = await res.json();
+            setCategories(data);
+        };
+        fetchCategories();
     }, []);
 
 
     const handleSort = (order) => {
-        const sortedProducts = [...filteredProducts].sort((a,b) =>
-        order === "asc" ? a.price - b.price : b.price - a.price
-    );
-    setFilteredProducts(sortedProducts);
-    setSortOrder(order);
-    };
-
-
-    const handleCategoryFilter = (category) => {
-        if (category === "") {
-            setFilteredProducts(products);
-        } else {
-            const filtered = products.filter((product) => product.category === category);
-            setFilteredProducts(filtered);
-        } 
-        setSelectedCategory(category);
+        setSortOrder(order);
         setPage(1);
     };
+
+    const handleCategoryFilter = (category) => {
+       setSelectedCategory(category);
+       setPage(1);
+    };
+
+    const handleSearch = (query) => {
+        setSearchTerm(query);
+        setPage(1);
+    };
+
   /**
    * Go to the next page of products.
    * 
    * @function nextPage
    */
-
   const nextPage = () => {
     if (page < Math.ceil(filteredProducts.length / productsPerPage)) {
     setPage((prev) => prev + 1);
@@ -93,30 +110,11 @@ export default function ProductsPage() {
    * 
    * @function prevPage
    */
-
   const prevPage = () => {
     if (page > 1) {
       setPage((prev) => prev - 1);
     }
   };
-
-
-  const handleSearch = (query) => {
-    const lowerQuery = query.toLowerCase();
-
-    if (lowerQuery === "") {
-        // If search query is empty, reset filteredProducts to the full product list
-        setFilteredProducts(products);
-    }
-    else {
-        // Filter products based on the query
-        const filtered = products.filter((product) => 
-        product.title.toLowerCase().includes(lowerQuery)
-    );
-    setFilteredProducts(filtered);
-    setPage(1);
-  }
-};
 
   return (
     <div className="product-ui">
@@ -146,9 +144,8 @@ export default function ProductsPage() {
           ))}
         </select>
       </div>
-      {loading ? (
-        <p className="loading"></p>
-      ) : (
+
+      {loading ? (<p className="loading"></p>) : (
         <>
           <ul className="product-list">
            {filteredProducts.length === 0 ? (
@@ -156,7 +153,7 @@ export default function ProductsPage() {
            ) : (
             filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage).map((product) => (
               <li key={product.id} className="product-card">
-                <Link href={`/${product.id}`} className="link">
+                 <Link href={`/${product.id}`} className="link">
                   
                     <img
                       src={product.images[0]}
@@ -169,10 +166,10 @@ export default function ProductsPage() {
                     <p className="product-price">Price: ${product.price}</p>
                     <p className="product-tags">Tags: {product.tags.join(", ")}</p>
                   
-                </Link>
-              </li>
-            ))
-        )}
+                 </Link>
+               </li>
+             ))
+         )}
           </ul>
 
           <PaginationControls
