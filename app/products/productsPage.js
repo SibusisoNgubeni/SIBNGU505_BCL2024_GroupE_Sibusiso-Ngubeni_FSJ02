@@ -5,94 +5,107 @@ import { useState, useEffect } from "react";
 import PaginationControls from "../components/pagination";
 import Navbar from "../components/navbar";
 
-
 /**
  * ProductsPage component that displays a list of products and handles pagination.
  */
-
 export default function ProductsPage() {
-    
-   /** @type {[Array, Function]} products - The list of products to be displayed. */
+
+/** 
+ * @type {[Array, Function]} products - The list of products to be displayed. 
+ */
   const [products, setProducts] = useState([]);
 
-  /** @type {[Array, Function]} filteredProducts - The filtered list of products based on the search query. */
+/** 
+ * @type {[Array, Function]} filteredProducts - The filtered list of products based on the search query. 
+ */
   const [filteredProducts, setFilteredProducts] = useState([]);
-
   const [categories, setCategories] = useState([]); // State for categories
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortOrder, setSortOrder] = useState("");
-
-    /** @type {[number, Function]} page - The current page number for pagination. */
+  
+  /** 
+   * @type {[number, Function]} page - The current page number for pagination. 
+   */
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
-
+  const [suggestions, setSuggestions] = useState([]);
   
-    /** @constant {number} productsPerPage - The number of products displayed per page. */
+  /** 
+   * @constant {number} productsPerPage - The number of products displayed per page.
+   */
   const productsPerPage = 20;
-   
 
+  const fetchProducts = async () => {
+    setLoading(true);
+    const skip = (page - 1) * productsPerPage;
 
-    const fetchProducts = async (
-        page,
-        searchTerm = "",
-        selectedCategory = "",
-        sortOrder = ""
-    ) => {
-      setLoading(true);
+    const queryParams = new URLSearchParams({
+      limit: productsPerPage.toString(),
+      skip: skip.toString(),
+    });
 
-      const skip = (page -1) * productsPerPage;
-      
-      const queryParams = new URLSearchParams({
-        limit: productsPerPage.toString(),
-        skip: skip.toString(),
-      });
+    if (searchTerm) queryParams.append("q", searchTerm);
+    if (selectedCategory) queryParams.append("category", selectedCategory);
+    if (sortOrder) queryParams.append("sort", sortOrder);
 
-      if (searchTerm) queryParams.append("q", searchTerm);
-      if (selectedCategory) queryParams.append("cataegory", selectedCategory);
-      if (sortOrder) queryParams.append("sort", sortOrder);
+    const queryString = queryParams.toString();
+    const res = await fetch(`https://next-ecommerce-api.vercel.app/products?${queryString}`);
+    const newProducts = await res.json();
+    
+    setProducts(newProducts);
+    setFilteredProducts(newProducts);
+    setLoading(false);
+  };
 
-      const queryString = queryParams.toString();
+  useEffect(() => {
+    fetchProducts();
+  }, [page, searchTerm, selectedCategory, sortOrder]);
 
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = await fetch(`https://next-ecommerce-api.vercel.app/categories`);
+      const data = await res.json();
+      setCategories(data);
+    };
+    fetchCategories();
+  }, []);
 
-      const res = await fetch(
-        `https://next-ecommerce-api.vercel.app/products?${queryString}`
+  const handleSort = (order) => {
+    setSortOrder(order);
+    setPage(1);
+  };
+
+  const handleCategoryFilter = (category) => {
+    setSelectedCategory(category);
+    setPage(1);
+  };
+
+  const handleSearch = (query) => {
+    setSearchTerm(query);
+    setPage(1);
+    if (query) {
+      const lowerCaseSearchTerm = query.toLowerCase();
+      const filtered = products.filter(product =>
+        product.title.toLowerCase().includes(lowerCaseSearchTerm)
       );
+      setSuggestions(filtered.slice(0, 5));
+    } else {
+      setSuggestions([]);
+    }
+  };
 
-      const newProducts = await res.json();
-      setProducts(newProducts);
-      setFilteredProducts(newProducts);
-      setLoading(false);
-    };
-
-    useEffect(() => {
-        fetchProducts(page, searchTerm, selectedCategory, sortOrder);
-    }, [page, searchTerm, selectedCategory, sortOrder]);
-
-    useEffect(() => {
-        const fetchCategories = async () => {
-            const res = await fetch(`https://next-ecommerce-api.vercel.app/categories`);
-            const data = await res.json();
-            setCategories(data);
-        };
-        fetchCategories();
-    }, []);
-
-
-    const handleSort = (order) => {
-        setSortOrder(order);
-        setPage(1);
-    };
-
-    const handleCategoryFilter = (category) => {
-       setSelectedCategory(category);
-       setPage(1);
-    };
-
-    const handleSearch = (query) => {
-        setSearchTerm(query);
-        setPage(1);
-    };
+  useEffect(() => {
+    if (searchTerm) {
+      const lowerCaseSearchTerm = searchTerm.toLowerCase();
+      const filtered = products.filter(product =>
+        product.title.toLowerCase().includes(lowerCaseSearchTerm)
+      );
+      setFilteredProducts(filtered);
+    } else {
+      setFilteredProducts(products);
+    }
+  }, [searchTerm, products]);
 
   /**
    * Go to the next page of products.
@@ -101,7 +114,7 @@ export default function ProductsPage() {
    */
   const nextPage = () => {
     if (page < Math.ceil(filteredProducts.length / productsPerPage)) {
-    setPage((prev) => prev + 1);
+      setPage((prev) => prev + 1);
     }
   };
 
@@ -118,9 +131,9 @@ export default function ProductsPage() {
 
   return (
     <div className="product-ui">
-    <Navbar onSearch={handleSearch} />
+      <Navbar onSearch={handleSearch} />
 
-    <div className="filters">
+      <div className="filters">
         <select
           value={sortOrder}
           onChange={(e) => handleSort(e.target.value)}
@@ -138,23 +151,34 @@ export default function ProductsPage() {
         >
           <option value="">All Categories</option>
           {categories.map((category) => (
-            <option key={category} value={category}>
-              {category}
+            <option key={category.id} value={category.name}>
+              {category.name}
             </option>
           ))}
         </select>
+
+        {suggestions.length > 0 && (
+          <ul className="suggestions-dropdown">
+            {suggestions.map((product) => (
+              <li key={product.id}>
+                <Link href={`/${product.id}`}>
+                  {product.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
-      {loading ? (<p className="loading"></p>) : (
+      {loading ? (<p className="loading">Loading...</p>) : (
         <>
           <ul className="product-list">
-           {filteredProducts.length === 0 ? (
-            <p>No products found.</p>
-           ) : (
-            filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage).map((product) => (
-              <li key={product.id} className="product-card">
-                 <Link href={`/${product.id}`} className="link">
-                  
+            {filteredProducts.length === 0 ? (
+              <p>No products found.</p>
+            ) : (
+              filteredProducts.slice((page - 1) * productsPerPage, page * productsPerPage).map((product) => (
+                <li key={product.id} className="product-card">
+                  <Link href={`/${product.id}`} className="link">
                     <img
                       src={product.images[0]}
                       alt={product.title}
@@ -165,11 +189,10 @@ export default function ProductsPage() {
                     <p className="product-brand">Brand: {product.brand}</p>
                     <p className="product-price">Price: ${product.price}</p>
                     <p className="product-tags">Tags: {product.tags.join(", ")}</p>
-                  
-                 </Link>
-               </li>
-             ))
-         )}
+                  </Link>
+                </li>
+              ))
+            )}
           </ul>
 
           <PaginationControls
@@ -184,3 +207,5 @@ export default function ProductsPage() {
     </div>
   );
 }
+
+
