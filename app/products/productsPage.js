@@ -59,8 +59,13 @@ export default function ProductsPage() {
     const res = await fetch(`https://next-ecommerce-api.vercel.app/products?${queryString}`);
     const newProducts = await res.json();
     
-    setProducts(newProducts);
-    setFilteredProducts(newProducts);
+    if (res.ok && newProducts) {
+      setProducts(newProducts);
+      setFilteredProducts(newProducts);
+    } else {
+      handleLocalFilterAndSorting();
+    }
+
     setLoading(false);
   };
 
@@ -80,11 +85,13 @@ export default function ProductsPage() {
   const handleSort = (order) => {
     setSortOrder(order);
     setPage(1);
+    handleLocalFilterAndSorting();
   };
 
   const handleCategoryFilter = (category) => {
     setSelectedCategory(category);
     setPage(1);
+    handleLocalFilterAndSorting();
   };
 
   const handleSearch = (query) => {
@@ -101,17 +108,41 @@ export default function ProductsPage() {
     }
   };
 
-  useEffect(() => {
+  const handleLocalFilterAndSorting = () => {
+    let updatedProducts = [...products];
+
     if (searchTerm) {
-      const lowerCaseSearchTerm = searchTerm.toLowerCase();
-      const filtered = products.filter(product =>
+      const lowerCaseSearchTerm = searchTerm.toLocaleLowerCase();
+      updatedProducts = updatedProducts.filter(product =>
         product.title.toLowerCase().includes(lowerCaseSearchTerm)
       );
-      setFilteredProducts(filtered);
-    } else {
-      setFilteredProducts(products);
     }
-  }, [searchTerm, products]);
+   
+    // Category Filter
+    if (selectedCategory) {
+      updatedProducts = updatedProducts.filter(product => 
+        product.category === selectedCategory
+      );
+    }
+
+       // Sort
+       if (sortOrder) {
+        updatedProducts.sort((a, b) => {
+          if (sortOrder === "asc") {
+            return a.price - b.price;
+          } else if (sortOrder === "desc") {
+            return b.price - a.price;
+          }
+          return 0;
+        });
+      }
+           setFilteredProducts(updatedProducts);
+           };
+
+           useEffect(() => {
+            handleLocalFilterAndSorting();
+          }, [searchTerm, selectedCategory, sortOrder, products]);
+      
 
   /**
    * Go to the next page of products.
