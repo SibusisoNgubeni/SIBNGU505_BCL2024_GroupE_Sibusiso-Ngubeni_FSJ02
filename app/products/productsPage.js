@@ -5,10 +5,12 @@ import { useState, useEffect } from "react";
 import PaginationControls from "../components/pagination";
 import Navbar from "../components/navbar";
 
+
 /**
  * ProductsPage component that displays a list of products and handles pagination.
  */
 export default function ProductsPage() {
+  
 
 /** 
  * @type {[Array, Function]} products - The list of products to be displayed. 
